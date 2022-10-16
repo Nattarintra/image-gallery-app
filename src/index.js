@@ -15,7 +15,6 @@ search_btn.addEventListener("click", event => {
     return
   }
   clearGallery()
-
   searchPhotos(search_text)
 })
 
