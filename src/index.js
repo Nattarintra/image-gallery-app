@@ -1,44 +1,64 @@
 const input = document.querySelector("input")
 const search_btn = document.querySelector(".search_btn")
 const apiKey = "b54580f369a7eeebecb2004dc429d08f"
-const url = `https://www.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=${apiKey}&format=rest`
-
-const search = false
-const page_num = 1
 
 let search_text = ""
 input.addEventListener("input", event => {
   event.preventDefault()
-  search_text = event.target.value
+  search_text = event.target.value.toLowerCase()
 })
 
-search_btn.addEventListener("click", () => {
-  if (!input) {
+search_btn.addEventListener("click", event => {
+  event.preventDefault()
+  if (input.value == "") {
     alert("Please enter some text!")
     return
   }
   clearGallery()
-  search = true
-  searchPhoto(search_text)
+
+  searchPhotos(search_text)
 })
 
 // clearGallery
 const clearGallery = () => {
-  document.querySelector(".display_images").innerHTML = ""
+  document.querySelector(".display-images").innerHTML = ""
 }
 
-// fetch API
-async function fetchPhotos() {
-  const data = await fecth("https://www.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=b54580f369a7eeebecb2004dc429d08f&format=rest", {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      Authorization: apiKey
-    }
+// display Images
+const displayImages = response => {
+  const photos = response.photos.photo
+
+  photos.forEach(image => {
+    const url = `https://farm${image.farm}.staticflickr.com/${image.server}/${image.id}_${image.secret}.jpg`
+    const photo = document.createElement("div")
+    photo.innerHTML = `<img src=${url} /> `
+    document.querySelector(".display-images").appendChild(photo)
   })
+}
+
+// search photos
+async function searchPhotos(text) {
+  const searchUrl = `https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=${apiKey}&per_page=12&format=json&text=${text}&nojsoncallback=?`
+
+  const data = await fetch(searchUrl, { method: "GET" })
+
+  if (!data.ok) {
+    throw new Error(`HTTP error! status: ${data.status}`)
+  }
 
   const response = await data.json()
-  console.log(response)
+  displayImages(response)
 }
 
-fetchPhotos()
+// fetch API photo by id
+async function fetchPhotos(id) {
+  const photoInfoUrl = `https://www.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=${apiKey}&photo_id=${id}&format=json&nojsoncallback=?`
+
+  const data = await fetch(photoInfoUrl, { method: "GET" })
+  if (!data.ok) {
+    throw new Error(`HTTP error! status: ${data.status}`)
+  }
+
+  const response = data.json()
+  displayImages(response)
+}
